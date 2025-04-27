@@ -4,6 +4,7 @@ import MessageBubble from './MessageBubble';
 import MessageInput from './MessageInput';
 import { AudienceLevel, Message, Mode } from '../types';
 import { analyzeContent } from '../utils/apiService';
+import BodyLanguageMonitor from './BodyLanguageMonitor';
 
 interface BodyMetrics {
   postureScore: number;      // e.g. 0–100
@@ -38,9 +39,10 @@ const ChatInterface = ({ audienceLevel, mode }: ChatInterfaceProps) => {
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [sessionId, setSessionId] = useState<string>(uuidv4()); // <- 👈 ADD THIS
-  const backendUrl = window.location.hostname === "localhost"
-  ? "http://localhost:5000"
-  : window.location.origin;
+  const backendUrl =
+  window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+    ? "http://localhost:5000"
+    : window.location.origin;
 
 
   useEffect(() => {
@@ -51,22 +53,21 @@ const ChatInterface = ({ audienceLevel, mode }: ChatInterfaceProps) => {
 const [bodyMetrics, setBodyMetrics] = useState<BodyMetrics | null>(null);
 
 // ➋ a useEffect that fetches every 5s in Presentation mode
-useEffect(() => {
-  if (mode !== 'Presentation') return;
+// useEffect(() => {
+//   if (mode !== 'Presentation') return;
   
-  const iv = setInterval(async () => {
-    try {
-      const res = await fetch(`${backendUrl}/bodymetrics`);
-      if (!res.ok) throw new Error();
-      setBodyMetrics(await res.json());
-    } catch (e) {
-      console.error('bodymetrics fetch failed', e);
-    }
-  }, 5000);
-  return () => clearInterval(iv);
-}, [mode]);
+//   const iv = setInterval(async () => {
+//     try {
+//       const res = await fetch(`${backendUrl}/bodymetrics`);
+//       if (!res.ok) throw new Error();
+//       setBodyMetrics(await res.json());
+//     } catch (e) {
+//       console.error('bodymetrics fetch failed', e);
+//     }
+//   }, 5000);
+//   return () => clearInterval(iv);
+// }, [mode]);
 
-  
 
   const toggleMessageExpand = (messageId: string) => {
     setExpandedMessageIds(prev =>
@@ -148,31 +149,11 @@ useEffect(() => {
     <div className="flex h-full bg-white overflow-hidden">
       {/* Left: fixed-width camera + metrics */}
       {mode === 'Presentation' && (
-        <div className="w-80 min-w-[280px] border-r flex flex-col overflow-hidden">
-          <h4 className="p-2 text-sm font-medium">Body Language Monitor</h4>
-          <img
-            src={`${backendUrl}/bodytrack`}
-            alt="Live pose stream"
-            style={{ width: "100%", height: "auto" }}
-            className="w-full h-48 object-cover"
-          />
-          <div className="flex-grow overflow-y-auto p-2">
-            <h5 className="text-sm font-medium mb-2">Analytics & Suggestions</h5>
-            {bodyMetrics ? (
-              <ul className="text-sm space-y-1">
-                <li>Posture: {bodyMetrics.postureScore}% upright</li>
-                <li>Hand gestures: {bodyMetrics.handGestureRate} /min</li>
-                <li>Head nods: {bodyMetrics.headNodCount} /min</li>
-                {bodyMetrics.suggestions.map((s, i) => (
-                  <li key={i}>💡 {s}</li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-xs text-gray-500">Analyzing…</p>
-            )}
-          </div>
-        </div>
-      )}
+  <div className="w-80 min-w-[280px] border-r flex flex-col overflow-hidden">
+    <BodyLanguageMonitor />
+  </div>
+)}
+
 
       {/* Right: chat column */}
       <div className="flex flex-col flex-1 overflow-hidden">
