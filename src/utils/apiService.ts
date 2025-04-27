@@ -2,13 +2,17 @@
 import { AudienceLevel, Feedback, Mode } from '../types';
 // Placeholder for Azure OpenAI API integration
 // only analysis (GPT feedback) — called after user clicks send
+const backendUrl = window.location.hostname === "localhost"
+  ? "http://localhost:5000"
+  : "https://ai-audience-mentor.onrender.com";
+
 export const analyzeContent = async (
   message: string,
   audienceLevel: AudienceLevel,
   mode: Mode,
   sessionId: string
 ): Promise<{ message: string; feedback: Feedback }> => {
-  const res = await fetch('http://localhost:5000/analyze', {
+  const res = await fetch(`${backendUrl}/analyze`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ message, audienceLevel, mode, sessionId })
@@ -23,7 +27,7 @@ export const speechToText = async (audioBlob: Blob): Promise<string> => {
   const form = new FormData()
   form.append('audio', audioBlob, 'recorded.wav')
 
-  const res = await fetch('http://localhost:5000/transcribe', {
+  const res = await fetch(`${backendUrl}/transcribe`, {
     method: 'POST',
     body: form
   })
@@ -95,7 +99,7 @@ export const analyzeAudio = async (
   const formData = new FormData()
   formData.append('audio', audioBlob, 'recorded.wav')
   // we don’t actually need to send audienceLevel/mode to /transcribe
-  const res = await fetch('http://localhost:5000/transcribe', {
+  const res = await fetch(`${backendUrl}/transcribe`, {
     method: 'POST',
     body: formData
   })
