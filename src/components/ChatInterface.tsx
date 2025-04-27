@@ -184,7 +184,7 @@ useEffect(() => {
               message={msg}
               mode={mode}
               expanded={expandedMessageIds.includes(msg.id)}
-              onToggleExpand={() => /* … */ null}
+              onToggleExpand={() => toggleMessageExpand(msg.id)}
             />
           ))}
           {isTyping && (
