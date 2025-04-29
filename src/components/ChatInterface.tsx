@@ -39,10 +39,10 @@ const ChatInterface = ({ audienceLevel, mode }: ChatInterfaceProps) => {
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [sessionId, setSessionId] = useState<string>(uuidv4()); // <- 👈 ADD THIS
-  const backendUrl =
-  window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
-    ? "http://localhost:5000"
-    : window.location.origin;
+  const backendUrl = window.location.hostname === "localhost"
+  ? "http://localhost:5000"
+  : "https://neural-nomads-hackathon-prd-wa-uaen-01-ajarepe3f3hydkd3.uaenorth-01.azurewebsites.net" ;
+
 
 
   useEffect(() => {
