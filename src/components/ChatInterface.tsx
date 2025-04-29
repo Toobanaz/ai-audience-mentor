@@ -41,83 +41,65 @@ const ChatInterface = ({ audienceLevel, mode }: ChatInterfaceProps) => {
   const [expandedMessageIds, setExpandedMessageIds] = useState<string[]>([]);
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [sessionId, setSessionId] = useState<string>(uuidv4()); // <- 👈 ADD THIS
+  const [sessionId, setSessionId] = useState<string>(uuidv4());
   const backendUrl = window.location.hostname === "localhost"
-  ? "http://localhost:5000"
-  : "https://neural-nomads-hackathon-prd-wa-uaen-01-ajarepe3f3hydkd3.uaenorth-01.azurewebsites.net" ;
-
+    ? "http://localhost:5000"
+    : "https://neural-nomads-hackathon-prd-wa-uaen-01-ajarepe3f3hydkd3.uaenorth-01.azurewebsites.net";
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // ➊ state for metrics
-const [bodyMetrics, setBodyMetrics] = useState<BodyMetrics | null>(null);
+  // State for metrics
+  const [bodyMetrics, setBodyMetrics] = useState<BodyMetrics | null>(null);
 
-// ➋ a useEffect that fetches every 5s in Presentation mode
-// useEffect(() => {
-//   if (mode !== 'Presentation') return;
-  
-//   const iv = setInterval(async () => {
-//     try {
-//       const res = await fetch(`${backendUrl}/bodymetrics`);
-//       if (!res.ok) throw new Error();
-//       setBodyMetrics(await res.json());
-//     } catch (e) {
-//       console.error('bodymetrics fetch failed', e);
-//     }
-//   }, 5000);
-//   return () => clearInterval(iv);
-// }, [mode]);
-useEffect(() => {
-  if (mode !== 'Presentation') return;
+  // Camera initialization in Presentation mode
+  useEffect(() => {
+    if (mode !== 'Presentation') return;
 
-  const startCamera = async () => {
-    const video = document.getElementById('camera') as HTMLVideoElement;
-    if (navigator.mediaDevices.getUserMedia) {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        video.srcObject = stream;
-      } catch (err) {
-        console.error('Camera access denied', err);
+    const startCamera = async () => {
+      const video = document.getElementById('camera') as HTMLVideoElement;
+      if (navigator.mediaDevices.getUserMedia) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+          video.srcObject = stream;
+        } catch (err) {
+          console.error('Camera access denied', err);
+        }
       }
-    }
-  };
+    };
 
-  startCamera();
-}, [mode]);
-
-
-  
+    startCamera();
+  }, [mode]);
 
   const toggleMessageExpand = (messageId: string) => {
-    setExpandedMessageIds(prev =>
+    setExpandedMessageIds((prev) =>
       prev.includes(messageId)
-        ? prev.filter(id => id !== messageId)
+        ? prev.filter((id) => id !== messageId)
         : [...prev, messageId]
     );
   };
 
   const handleSendMessage = async (content: string) => {
-    // 1) Push the user bubble
+    // Push the user bubble
     const userMessage: Message = {
       id: uuidv4(),
       content,
       sender: 'user',
       timestamp: new Date(),
     };
-    setMessages(prev => [...prev, userMessage]);
+    setMessages((prev) => [...prev, userMessage]);
 
     setIsTyping(true);
 
     try {
       let aiResponse: { message: string; feedback: any };
 
-      // 2) If it's a "summarize" request, bundle up all teacher texts and POST directly
+      // Handle "summarize" request
       if (mode === 'Explain' && content.trim().toLowerCase().startsWith('summarize')) {
         const teacherTexts = messages
-          .filter(m => m.sender === 'user')
-          .map(m => m.content)
+          .filter((m) => m.sender === 'user')
+          .map((m) => m.content)
           .join('\n\n');
 
         const res = await fetch(`${backendUrl}/analyze`, {
@@ -129,39 +111,39 @@ useEffect(() => {
             audienceLevel,
             mode,
             sessionId,
-          })
+          }),
         });
         if (!res.ok) throw new Error('Analysis failed');
         aiResponse = await res.json();
       } else {
-        // 3) Otherwise, just do the normal single-turn analysis
+        // Normal single-turn analysis
         aiResponse = await analyzeContent(content, audienceLevel, mode, sessionId);
       }
 
-      // 4) Append the AI bubble
+      // Append the AI bubble
       setTimeout(() => {
         const aiMessage: Message = {
           id: uuidv4(),
           content: aiResponse.message,
           sender: 'ai',
           timestamp: new Date(),
-          feedback: aiResponse.feedback
+          feedback: aiResponse.feedback,
         };
-        setMessages(prev => [...prev, aiMessage]);
-        setExpandedMessageIds(prev => [...prev, aiMessage.id]);
+        setMessages((prev) => [...prev, aiMessage]);
+        setExpandedMessageIds((prev) => [...prev, aiMessage.id]);
         setIsTyping(false);
       }, 500);
     } catch (err) {
       console.error(err);
       setIsTyping(false);
-      setMessages(prev => [
+      setMessages((prev) => [
         ...prev,
         {
           id: uuidv4(),
           content: "Sorry, I'm having trouble processing your request right now. Please try again later.",
           sender: 'ai',
           timestamp: new Date(),
-        }
+        },
       ]);
     }
   };
@@ -170,22 +152,16 @@ useEffect(() => {
     <div className="flex h-full bg-white overflow-hidden">
       {/* Left: fixed-width camera + metrics */}
       {mode === 'Presentation' && (
-  <div className="w-80 min-w-[280px] border-r flex flex-col overflow-hidden">
-    <BodyLanguageMonitor />
-  </div>
-)}
-
-  <div className="w-80 min-w-[280px] border-r flex flex-col overflow-hidden">
-    <BodyLanguageMonitor />
-  </div>
-)}
-
+        <div className="w-80 min-w-[280px] border-r flex flex-col overflow-hidden">
+          <BodyLanguageMonitor />
+        </div>
+      )}
 
       {/* Right: chat column */}
       <div className="flex flex-col flex-1 overflow-hidden">
-        {/* message list */}
+        {/* Message list */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 pt-16 lg:pt-4">
-          {messages.map(msg => (
+          {messages.map((msg) => (
             <MessageBubble
               key={msg.id}
               message={msg}
@@ -199,8 +175,14 @@ useEffect(() => {
               <div className="bg-ailearn-lightgray rounded-lg px-4 py-2">
                 <div className="flex space-x-1">
                   <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+                  <div
+                    className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                    style={{ animationDelay: '0.1s' }}
+                  />
+                  <div
+                    className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                    style={{ animationDelay: '0.2s' }}
+                  />
                 </div>
               </div>
             </div>
@@ -208,7 +190,7 @@ useEffect(() => {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* input bar */}
+        {/* Input bar */}
         <MessageInput
           onSendMessage={handleSendMessage}
           audienceLevel={audienceLevel}
@@ -217,8 +199,6 @@ useEffect(() => {
       </div>
     </div>
   );
-  
-  
 };
 
 export default ChatInterface;
