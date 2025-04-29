@@ -174,10 +174,22 @@ def analyze_audio():
                     temperature=0,
                     max_tokens=300
                 )
-                raw = resp.choices[0].message.content.strip()
-                if raw.startswith("```"):
-                    raw = "\n".join(raw.split("\n")[1:-1])
-                data = json.loads(raw)
+                def parse_json_response(fenced: str) -> dict:
+                    s = fenced.strip()
+                    if s.startswith("```"):
+                        lines = s.split("\n")
+                        s = "\n".join(lines[1:-1]).strip()
+                    if not s:
+                        raise ValueError("LLM returned an empty JSON payload!")
+                    try:
+                        return json.loads(s)
+                    except JSONDecodeError as e:
+                        print("Failed to parse JSON from model output:", repr(s))
+                        raise
+
+                # then:
+                raw = resp.choices[0].message.content
+                data = parse_json_response(raw)
                 session["pending_questions"] = data.get("questions", [])
                 session["question_index"] = 1
                 session["teacher_responses"] = []
