@@ -4,7 +4,7 @@ import { AudienceLevel, Feedback, Mode } from '../types';
 // only analysis (GPT feedback) — called after user clicks send
 const backendUrl = window.location.hostname === "localhost"
   ? "http://localhost:5000"
-  : "https://ai-audience-mentor.onrender.com";
+  : "https://neural-nomads-hackathon-prd-wa-uaen-01-ajarepe3f3hydkd3.uaenorth-01.azurewebsites.net/";
 
 export const analyzeContent = async (
   message: string,
