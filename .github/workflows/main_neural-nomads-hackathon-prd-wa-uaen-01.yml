@@ -6,6 +6,11 @@ on:
       - main
   workflow_dispatch:
 
+env:
+  FLASK_ENV: production
+  PYTHON_VERSION: '3.10'
+  WEBAPP_NAME: 'Neural-Nomads-hackathon-PRD-WA-UAEN-01'
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -15,21 +20,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python version
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Create and start virtual environment
-        run: |
-          python -m venv venv
-          source venv/bin/activate
-          
-      - name: Upgrade pip
-        run: python -m pip install --upgrade pip
-  
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install gunicorn
 
       - name: Zip artifact for deployment
         run: zip release.zip ./* -r
@@ -38,9 +38,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: python-app
-          path: |
-            release.zip
-            !venv/
+          path: release.zip
 
   deploy:
     runs-on: ubuntu-latest
@@ -58,17 +56,18 @@ jobs:
       - name: Unzip artifact for deployment
         run: unzip release.zip
 
-      - name: Configure Python Runtime
+      - name: Configure Azure Web App
         uses: azure/appservice-settings@v1
         with:
-          app-name: 'Neural-Nomads-hackathon-PRD-WA-UAEN-01'
+          app-name: ${{ env.WEBAPP_NAME }}
           general-settings-json: '{"pythonVersion": "3.10", "linuxFxVersion": "PYTHON|3.10"}'
+          app-settings-json: '{"SCM_DO_BUILD_DURING_DEPLOYMENT": "true"}'
 
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
         id: deploy-to-webapp
         with:
-          app-name: 'Neural-Nomads-hackathon-PRD-WA-UAEN-01'
+          app-name: ${{ env.WEBAPP_NAME }}
           slot-name: 'Production'
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_FC8B4AE3D13D4D37A2D0B309E0081596 }}
-          start-up-command: 'gunicorn --bind=0.0.0.0 --timeout 600 app:app'
+          start-up-command: 'gunicorn --bind=0.0.0.0 --timeout 600 --workers 4 --threads 2 app:app'
