@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: ai-audience-mentor-main
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT
+    envVars:
+      - key: AZURE_SPEECH_KEY
+        value: DN9sJDTwszwARhRJsodK9ghq0zqsELDFsueMK1MqSCoUdXWx3g3eJQQJ99BDAC5T7U2XJ3w3AAAEACOGeQlJ
+      - key: AZURE_SPEECH_ENDPOINT
+        value: https://neuralnomads-hackathon-stg-frc-ais-01.cognitiveservices.azure.com/
+      - key: OPENAI_API_KEY
+        value: 8FxgCGfQiPPExro4qLQwqLerfydkU3CMXzZ0AJpANWnqYrqI3dmMJQQJ99BDACfhMk5XJ3w3AAABACOGvOS6
+      - key: OPENAI_API_BASE
+        value: https://neuralnomads-hackathon-stg-aoai-sc-01.openai.azure.com/
