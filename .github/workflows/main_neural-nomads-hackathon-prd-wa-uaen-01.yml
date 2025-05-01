@@ -73,7 +73,7 @@ jobs:
             "WEBSITES_PORT": "8000",
             "FLASK_ENV": "production",
             "PYTHON_VERSION": "3.10",
-            "CORS_ALLOWED_ORIGINS": "*"  # Change to your frontend URL in production
+            "CORS_ALLOWED_ORIGINS": "https://kind-sea-0dc2d0b00.6.azurestaticapps.net"
           }'
 
       - name: Deploy to Azure Web App
